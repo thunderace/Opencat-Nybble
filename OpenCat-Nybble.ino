@@ -297,7 +297,7 @@ void setup() {
   motion.loadBySkillName(lastCmd);
   for (int8_t i = DOF - 1; i >= 0; i--) {
     pulsePerDegree[i] = float(PWM_RANGE) / servoAngleRanges[i];
-    servoCalibs[i] = calib[i];
+    servoCalibs[i] = EEPROMReadInt(CALIB + i);
     calibratedDuty0[i] =  SERVOMIN + PWM_RANGE / 2 + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
     //PTL(SERVOMIN + PWM_RANGE / 2 + float(middleShift(i) + servoCalibs[i]) * pulsePerDegree[i] * rotationDirection(i) );
     calibratedPWM(i, motion.dutyAngles[i]);
@@ -406,6 +406,7 @@ void loop() {
             saveCalib(servoCalibs);
             break;
           }
+#if 0          
         case T_ABORT: {
             PTLF("aborted");
             for (byte i = 0; i < DOF; i++) {
@@ -413,7 +414,7 @@ void loop() {
             }
             break;
           }
-
+#endif
         // this block handles array like arguments
         case T_INDEXED: //indexed joint motions: joint0, angle0, joint1, angle1, ... (binary encoding)
         case T_LISTED: //list of all 16 joint: angle0, angle2,... angle15 (binary encoding)

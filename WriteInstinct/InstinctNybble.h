@@ -640,8 +640,5 @@ const char stand[] PROGMEM = {
    20, -20,   7,   0,  -5,  -5,  20,  20, -50,  60,  -5,  -5,  60, -30, -60, -60,	  8,  2, 0, 0,
   -20, -40,  -7,   0,  -5,  -5,  20,  20,  50, -70,  -5,  -5,  40,  60, -60, -60,	  32, 0, 0, 0,
 };
-  const char* skillNameWithType[]={"bdI","biI","bkI","bkLI","bkRI","crFI","crLI","crRI","lyI","trFI","trLI","trRI","vtI","wkFI","wkLI","wkRI","balanceI","buttUpI","calibI","droppedI","liftedI","luI","restI","sitI","sleepI","strI","zeroN","hiI","peeI","puI","rcI","standI",};
-  const char* progmemPointer[] = {bd, bi, bk, bkL, bkR, crF, crL, crR, ly, trF, trL, trR, vt, wkF, wkL, wkR, balance, buttUp, calib, dropped, lifted, lu, rest, sit, sleep, str, zero, hi, pee, pu, rc, stand, };
-//the total byte of instincts is 4739
-//the maximal array size is 365 bytes of bk. 
-//Make sure to leave enough memory for SRAM to work properly. Any single skill should be smaller than 400 bytes for safety.
+const char* skillNameWithType[NUM_SKILLS]={"bdI","biI","bkI","bkLI","bkRI","crFI","crLI","crRI","lyI","trFI","trLI","trRI","vtI","wkFI","wkLI","wkRI","balanceI","buttUpI","calibI","droppedI","liftedI","luI","restI","sitI","sleepI","strI","zeroN","hiI","peeI","puI","rcI","standI"};
+const char* progmemPointer[NUM_SKILLS] = {bd, bi, bk, bkL, bkR, crF, crL, crR, ly, trF, trL, trR, vt, wkF, wkL, wkR, balance, buttUp, calib, dropped, lifted, lu, rest, sit, sleep, str, zero, hi, pee, pu, rc, stand};

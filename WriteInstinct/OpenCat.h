@@ -268,7 +268,11 @@ byte pins[] = {8, 9, 10, 11,
                0, 2, 6, 4,
                1, 3, 7, 5
               };
+#ifdef ESP8266
 #define BATT D3
+#else
+#define BATT A0
+#endif
 #define LOW_BATT 640
 #define DEVICE_ADDRESS 0x54
 #define BAUD_RATE 115200
@@ -293,7 +297,7 @@ byte pins[] = {8, 9, 10, 11,
 
 //on-board EEPROM addresses
 #define CALIB 0              // 16 byte array
-#define MPUCALIB 16           // 16 byte array
+#define MPUCALIB 16           
 
 #define ADAPT_PARAM 160          // 16 x NUM_ADAPT_PARAM byte array
 #define NUM_ADAPT_PARAM  2    // number of parameters for adaption
@@ -307,11 +311,16 @@ byte pins[] = {8, 9, 10, 11,
 
 #define MG90D_MIN 158*PWM_FACTOR //so mg92b and mg90 are not centered at the same signal
 #define MG90D_MAX 515*PWM_FACTOR
-#define MG90D_RANGE 150
+#define MG90D_RANGE 150 // $$AL$$ in degrees???
+
+#define MG90S_MIN 158*PWM_FACTOR  // $$AL$$ TODO update
+#define MG90S_MAX 620*PWM_FACTOR  // $$AL$$ TODO update
+#define MG90S_RANGE 150           // $$AL$$ TODO update
 
 #define P1S_MIN 180*PWM_FACTOR
 #define P1S_MAX 620*PWM_FACTOR
 #define P1S_RANGE 250
+
 
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
@@ -327,22 +336,20 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVOMAX  P1S_MAX // this is the 'maximum' pulse length count (out of 4096)
 #define SERVO_ANG_RANGE P1S_RANGE
 #else
-#define SERVOMIN  MG92B_MIN // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  MG92B_MAX // this is the 'maximum' pulse length count (out of 4096)
+#ifdef MG90S
+#define SERVOMIN  MG90S_MIN 
+#define SERVOMAX  MG90S_MAX 
+#define SERVO_ANG_RANGE MG90S_RANGE
+#else
+#define SERVOMIN  MG92B_MIN 
+#define SERVOMAX  MG92B_MAX 
 #define SERVO_ANG_RANGE MG92B_RANGE
 #endif
-
+#endif
 #define PWM_RANGE (SERVOMAX - SERVOMIN)
 
 float degPerRad = 180 / M_PI;
 float radPerDeg = M_PI / 180;
-
-// tone: pause,1,  2,  3,  4,  5,  6,  7,  1,  2, 3,
-// code: 0,    1,  3,  5,  6,  8,  10, 12, 13, 15, 17
-int8_t melody[] = {8, 13, 15,//10, 13, 8,  0,  5,  8,  3,  5, 8,
-                   8, 8, 4 //32, 32, 8, 32, 32, 32, 32, 32, 8,
-                  };
-int8_t calibs[] = {0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
 #ifdef BITTLE
 int8_t middleShifts[] = {0, 15, 0, 0,
                          -45, -45, -45, -45,
@@ -358,8 +365,8 @@ int8_t middleShifts[] = {0, 15, 0, 0,
 #endif
 #ifdef Arduino_Board
 int8_t rotationDirections[] = {1, -1, 1, 1, //$$AL$$ TODO : update
-                               1, -1, 1, -1,
                                1, -1, -1, 1,
+                               -1, 1, 1, -1,
                                -1, 1, 1, -1
                               };
 #else
@@ -605,9 +612,9 @@ void writeConsts() {
   if (resetConsts == 'Y' || resetConsts == 'y') {
     for (byte i = 0; i < DOF; i++) {
 #ifdef ESP8266    
-      EEPROM.write(CALIB + i, calibs[i]);
+      EEPROM.write(CALIB + i, 0);
  #else    
-      EEPROM.update(CALIB + i, calibs[i]);
+      EEPROM.update(CALIB + i, 0);
 #endif      
     }
   }

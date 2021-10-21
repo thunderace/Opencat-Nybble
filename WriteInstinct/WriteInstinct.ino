@@ -128,7 +128,6 @@ void setup() {
   beep(100, 50);
   // initialize device
   mpu.initialize();
-
   writeConsts();
   // servo
   pwm.begin();
@@ -138,7 +137,7 @@ void setup() {
   motion.loadBySkillName("rest");
   for (byte i = 0; i < DOF; i++) {
     pulsePerDegree[i] = float(PWM_RANGE) / servoAngleRanges[i];
-    servoCalibs[i] = calibs[i];
+    servoCalibs[i] = 0;
     calibratedDuty0[i] =  SERVOMIN + PWM_RANGE / 2 + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
     calibratedPWM(i, motion.dutyAngles[i]);
   }
@@ -254,7 +253,7 @@ void loop() {
       case T_ABORT: {
           PTLF("abort calibration");
           for (byte i = 0; i < DOF; i++) {
-            servoCalibs[i] = calibs[i];
+            servoCalibs[i] = 0;
           }
           break;
         }
