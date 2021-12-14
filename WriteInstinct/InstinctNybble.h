@@ -1,5 +1,5 @@
 #define NYBBLE
-#define NUM_SKILLS 32
+#define NUM_SKILLS 31
 
 #define SKILL_HEADER_LENGTH 4
 const char bd[] PROGMEM = { 
@@ -570,19 +570,24 @@ const char calib[] PROGMEM = {
 };
 const char dropped[] PROGMEM = { 
 1, 0, 75, 1,
-    0,  30,   0,   0,  -5,  -5,  15,  15, -75, -75, -60, -60,  60,  60,  30,  30,
+    0,  30,   0,   0,  
+    -5,  -5,  15,  15, -75, -75, -60, -60,  60,  60,  30,  30,
 };
 const char lifted[] PROGMEM = { 
 1, 0, -75, 1,
-    0, -70,   0,   0,   0,   0,   0,   0,  55,  55,  20,  20,  45,  45,   0,   0,
+    0, -70,   0,   0,   
+    0,   0,   0,   0,  
+    55,  55,  20,  20,  45,  45,   0,   0,
 };
 const char lu[] PROGMEM = { 
 1, -30, 15, 1,
-  -45,  60, -60,   0,   5,   5,   3,   3, -60,  70, -45, -35,  15, -60,  10, -65,
+  -45,  60, -60,   0,   
+  5,   5,   3,   3, -60,  70, -45, -35,  15, -60,  10, -65
 };
 const char rest[] PROGMEM = { 
 1, 0, 0, 1,
-  -30, -80, -45,   0,  -3,  -3,   3,   3,  60,  60, -60, -60, -45, -45,  45,  45,
+  -30, -80, -45,   0,  -3,  
+  -3,   3,   3,  60,  60, -60, -60, -45, -45,  45,  45
 };
 const char sit[] PROGMEM = { 
 1, 0, -20, 1,
@@ -595,10 +600,6 @@ const char sleep[] PROGMEM = {
 const char str[] PROGMEM = { 
 1, 0, 15, 1,
     0,  30,   0,   0,  -5,  -5,   0,   0, -75, -75, -45, -45,  60,  60, -45, -45,
-};
-const char zero[] PROGMEM = { 
-1, 0, 0, 1,
-    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 };
 
 const char hi[] PROGMEM = { 
@@ -640,5 +641,5 @@ const char stand[] PROGMEM = {
    20, -20,   7,   0,  -5,  -5,  20,  20, -50,  60,  -5,  -5,  60, -30, -60, -60,	  8,  2, 0, 0,
   -20, -40,  -7,   0,  -5,  -5,  20,  20,  50, -70,  -5,  -5,  40,  60, -60, -60,	  32, 0, 0, 0,
 };
-const char* skillNameWithType[NUM_SKILLS]={"bdI","biI","bkI","bkLI","bkRI","crFI","crLI","crRI","lyI","trFI","trLI","trRI","vtI","wkFI","wkLI","wkRI","balanceI","buttUpI","calibI","droppedI","liftedI","luI","restI","sitI","sleepI","strI","zeroN","hiI","peeI","puI","rcI","standI"};
-const char* progmemPointer[NUM_SKILLS] = {bd, bi, bk, bkL, bkR, crF, crL, crR, ly, trF, trL, trR, vt, wkF, wkL, wkR, balance, buttUp, calib, dropped, lifted, lu, rest, sit, sleep, str, zero, hi, pee, pu, rc, stand};
+const char* skillNameWithType[NUM_SKILLS]={"bd","bi","bkI","bkL","bkR","crF","crL","crR","ly","trF","trL","trR","vt","wkF","wkL","wkR","balance","buttUp","calib","dropped","lifted","lu","rest","sit","sleep","str","hi","pee","pu","rc","stand"};
+const char* progmemPointer[NUM_SKILLS] =  { bd , bi , bk  , bkL , bkR , crF , crL , crR , ly , trF , trL , trR , vt,  wkF,  wkL,  wkR,  balance,  buttUp,  calib,  dropped,  lifted,  lu,  rest,  sit,  sleep,  str,  hi,  pee,  pu,  rc,  stand};

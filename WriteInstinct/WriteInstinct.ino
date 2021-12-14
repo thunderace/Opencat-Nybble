@@ -30,7 +30,6 @@
 */
 #include "OpenCat.h"
 #define INSTINCT_SKETCH
-//#define AUTORUN
 
 
 
@@ -91,7 +90,6 @@ int giro_deadzone = 1;   //Giro error allowed, make it lower to get more precisi
 //MPU6050 mpu;
 MPU6050 mpu(0x68); // <-- use for AD0 high
 
-byte stage = 0;
 char choice;
 int16_t ag[6];      //int16_t ax, ay, az, gx, gy, gz;
 int agMean[6];  //mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz;
@@ -131,14 +129,14 @@ void setup() {
   writeConsts();
   // servo
   pwm.begin();
-  pwm.setPWMFreq(60 * PWM_FACTOR); // Analog servos run at ~60 Hz updates
+  pwm.setPWMFreq(50); 
   delay(100);
   strcpy(lastCmd, "rest");
   motion.loadBySkillName("rest");
   for (byte i = 0; i < DOF; i++) {
     pulsePerDegree[i] = float(PWM_RANGE) / servoAngleRanges[i];
     servoCalibs[i] = 0;
-    calibratedDuty0[i] =  SERVOMIN + PWM_RANGE / 2 + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
+    calibratedDuty0[i] =  SERVOMIN + (PWM_RANGE / 2) + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
     calibratedPWM(i, motion.dutyAngles[i]);
   }
   shutServos();
@@ -148,8 +146,9 @@ void setup() {
   PTLF("\nCalibrate MPU? (Y/n)");
   while (!Serial.available());
   choice = Serial.read();
+  PTL(choice);
   if (choice == 'Y' || choice == 'y') {
-    PTLF("\n* MPU6050 Calibration Routine");
+    PTLF("\n* MPU6050 Calibration Routine *");
     delay(100);
     // verify connection
     PTL(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed (sometimes it shows \"failed\" but is ok to bypass."));
@@ -165,58 +164,38 @@ void setup() {
 }
 
 void loop() {
-#ifndef AUTORUN
-  if (choice == 'Y' || choice == 'y')
-#endif
-  {
-    if (stage == 0) {
-#ifdef AUTORUN
-      for (byte i = 0; i < 6; i++) {
-        EEPROMWriteInt(MPUCALIB + i * 2, 0);
-      }
-#endif
-      PTLF("\nReading sensors for first time...");
-      meansensors();
-      stage++;
-      delay(100);
+  if (choice == 'Y' || choice == 'y') {
+    PTLF("\nReading sensors for first time...");
+    meansensors();
+    delay(100);
+    PTLF("\nYour MPU6050 should be placed in horizontal position, with package letters facing up.");
+    PTLF("Don't touch it until all six numbers appear. You should hear a long beep followed by a Meooow!");
+    calibration();
+    delay(100);
+    meansensors();
+    PTLF("FINISHED!");
+    PTLF("\nData is printed as:\t\tacelX\tacelY\tacelZ\tgiroX\tgiroY\tgiroZ");
+    PTLF("Readings should be close to:\t0\t0\t16384\t0\t0\t0");
+
+    PTF("Sensor readings with offsets:\t");
+    printList(agMean, 6);
+
+    PTF("Your calibration offsets:\t");
+    printList(agOffset, 6);
+
+    PTLF("The offsets are saved and automatically sent to mpu.setXAccelOffset(yourOffset)\n");
+    for (byte i = 0; i < 6; i++) {
+      mpuOffset[i] = agOffset[i];
+      //EEPROMWriteInt(MPUCALIB + i * 2, mpuOffset[i]);
     }
 
-    if (stage == 1) {
-      PTLF("\nYour MPU6050 should be placed in horizontal position, with package letters facing up.");
-      PTLF("Don't touch it until all six numbers appear. You should hear a long beep followed by a Meooow!");
-      calibration();
-      stage++;
-      delay(100);
-    }
-
-    if (stage == 2) {
-      meansensors();
-      PTLF("FINISHED!");
-      PTLF("\nData is printed as:\t\tacelX\tacelY\tacelZ\tgiroX\tgiroY\tgiroZ");
-      PTLF("Readings should be close to:\t0\t0\t16384\t0\t0\t0");
-
-      PTF("Sensor readings with offsets:\t");
-      printList(agMean, 6);
-
-      PTF("Your calibration offsets:\t");
-      printList(agOffset, 6);
-
-      PTLF("The offsets are saved and automatically sent to mpu.setXAccelOffset(yourOffset)\n");
-      for (byte i = 0; i < 6; i++) {
-        mpuOffset[i] = agOffset[i];
-        EEPROMWriteInt(MPUCALIB + i * 2, mpuOffset[i]);
-      }
-
-      mpu.setXAccelOffset(agOffset[0]);
-      mpu.setYAccelOffset(agOffset[1]);
-      mpu.setZAccelOffset(agOffset[2]);
-      mpu.setXGyroOffset(agOffset[3]);
-      mpu.setYGyroOffset(agOffset[4]);
-      mpu.setZGyroOffset(agOffset[5]);
-      //while (1);
-      stage = 3;
-      meow();
-    }
+    mpu.setXAccelOffset(agOffset[0]);
+    mpu.setYAccelOffset(agOffset[1]);
+    mpu.setZAccelOffset(agOffset[2]);
+    mpu.setXGyroOffset(agOffset[3]);
+    mpu.setYGyroOffset(agOffset[4]);
+    mpu.setZGyroOffset(agOffset[5]);
+    //choice = 'N';
   }
 
   char cmd[CMD_LEN] = {};
@@ -295,6 +274,12 @@ void loop() {
           printList(target, 2);
 
           int duty = SERVOMIN + PWM_RANGE / 2 + float(middleShifts[target[0]]  + servoCalibs[target[0]] +  motion.dutyAngles[target[0]]) * pulsePerDegree[target[0]] * rotationDirections[target[0]] ;
+          PTF("setPWM2 : Pin ");
+          PT(pins[target[0]]);
+          PTF("-");
+          PTL(duty);
+          //PTF("-");
+          //PTL(angle);
           pwm.setPWM(pins[target[0]], 0,  duty);
           //      PT("shift ");
           //      PT(middleShift(target[0]));
@@ -331,10 +316,6 @@ void loop() {
       if (token == T_SKILL) { //validating key
         motion.loadBySkillName(cmd);
         //motion.info();
-#ifdef DEVELOPER
-        PTF("free memory: ");
-        PTL(freeMemory());
-#endif
         timer = 0;
         if (strcmp(cmd, "balance") && strcmp(cmd, "lifted") && strcmp(cmd, "dropped") )
           strcpy(lastCmd, cmd);

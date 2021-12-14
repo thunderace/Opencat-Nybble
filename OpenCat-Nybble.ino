@@ -31,8 +31,9 @@
 #include "WriteInstinct/OpenCat.h"
 
 #ifdef ESP8266  // need to remove MPU on arduino to reduce the code size
-#define WITH_MPU
+//#define WITH_MPU
 #endif //!ESP8266
+
 #ifdef WITH_MPU
 #include <I2Cdev.h>
 #include <MPU6050_6Axis_MotionApps20.h>
@@ -207,14 +208,12 @@ void checkBodyMotion()  {
 void setup() {
   pinMode(BUZZER, OUTPUT);
   // join I2C bus (I2Cdev library doesn't do this automatically)
-#ifdef WITH_MPU  
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
   Fastwire::setup(400, true);
 #endif
-#endif //!WITH_MPU
   Serial.begin(BAUD_RATE);
   Serial.setTimeout(10);
   while (!Serial);
@@ -289,17 +288,16 @@ void setup() {
 
   // servo
   pwm.begin();
-  pwm.setPWMFreq(60 * PWM_FACTOR); // Analog servos run at ~60 Hz updates
+  pwm.setPWMFreq(50); // Analog servos run at ~60 Hz updates
   delay(200);
 
   //meow();
   strcpy(lastCmd, "rest");
   motion.loadBySkillName(lastCmd);
-  for (int8_t i = DOF - 1; i >= 0; i--) {
+  for (byte i = 0; i < DOF; i++) {
     pulsePerDegree[i] = float(PWM_RANGE) / servoAngleRanges[i];
-    servoCalibs[i] = EEPROMReadInt(CALIB + i);
-    calibratedDuty0[i] =  SERVOMIN + PWM_RANGE / 2 + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
-    //PTL(SERVOMIN + PWM_RANGE / 2 + float(middleShift(i) + servoCalibs[i]) * pulsePerDegree[i] * rotationDirection(i) );
+    servoCalibs[i] = 0;//EEPROMReadInt(CALIB + i);
+    calibratedDuty0[i] =  SERVOMIN + (PWM_RANGE / 2) + float(middleShifts[i] + servoCalibs[i]) * pulsePerDegree[i]  * rotationDirections[i] ;
     calibratedPWM(i, motion.dutyAngles[i]);
     delay(20);
   }
@@ -314,6 +312,7 @@ void setup() {
 }
 
 void loop() {
+/*
   float voltage = analogRead(BATT);
   if (voltage < LOW_BATT) { //if battery voltage < threshold, it needs to be recharged
     //give the robot a break when voltage drops after sprint
@@ -325,7 +324,7 @@ void loop() {
     delay(1500);
   }
 
-  else {
+  else */ {
     newCmd[0] = '\0';
     newCmdIdx = 0;
     // input block

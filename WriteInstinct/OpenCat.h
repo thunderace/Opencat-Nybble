@@ -1,71 +1,3 @@
-/*
-    Skill class holds only the lookup information of joint angles.
-    One frame of joint angles defines a static posture, while a series of frames defines a periodic motion, usually a gait.
-    Skills are instantiated as either:
-      instinct  (trained by Rongzhong Li, saved in external i2c EERPOM) or
-      newbility (taught by other users, saved in PROGMEM)
-    A well-tuned (finalized) newbility can also be saved in external i2c EEPROM. Remember that EEPROM has very limited (1,000,000) write cycles!
-
-    SkillList (inherit from QList class) holds a mixture of instincts and newbilities.
-    It also provides a dict(key) function to return the pointer to the skill.
-    Initialization information(individual skill name, address) for SkillList is stored in on-board EEPROM
-
-    Behavior list (inherit from QList class) holds a time dependent sequence of multiple skills, triggered by certain perceptions.
-    It defines the order, speed, repetition and interval of skills。
-    (Behavior list is yet to be implemented)
-
-    Motion class uses the lookup information of a Skill to construct a Motion object that holds the actual angle array.
-    It also implements the reading and writing functions in specific storage locations.
-    Considering Arduino's limited SRAM, you should create only one Motion object and update it when loading new skills.
-
-    instinct(external EEPROM) \
-                                -- skill that contains only lookup information
-    newbility(progmem)        /
-
-    Skill list: skill1, skill2, skill3,...
-                              |
-                              v
-                           motion that holds actual joint angle array in SRAM
-
-    Behavior list: skill3(speed, repetition and interval), skill1(speed, repetition and interval), ...
-
-    **
-    Updates: One Skill object in the SkillList takes around 20 bytes in SRAM. It takes 200+ bytes for 15+ skills.
-    On a tiny atmega328 chip with only 2KB SRAM, I'm implementing the Skills and SkillList in the on-board EEPROM。
-    Now the skill list starts from on-board EEPROM address SKILLS.
-    Format:
-    1 byte skill_1 nameLength + char string name1 + 1 char skillType1 + 1 int address1,
-    1 byte skill_2 nameLength + char string name2 + 1 char skillType2 + 1 int address2,
-    ...
-    The iterator can traverse the list with the string length of each skill name.
-
-    The Skill and SkillList classes are obsolete in the atmega328 implementation but are still included in this header file.
-    **
-
-  Rongzhong Li
-  January 2021
-
-  Copyright (c) 2021 Petoi LLC.
-
-  The MIT License
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-
-*/
 //postures and movements trained by RongzhongLi
 //#include "InstinctBittle.h" //activate the correct header file according to your model
 #include "InstinctNybble.h"
@@ -79,15 +11,7 @@
 #endif
 #endif
 
-//#define NyBoard_V0_1
-//#define NyBoard_V0_2
-//#define NyBoard_V1_0
 #define Arduino_Board
-//#define DEVELOPER
-#ifdef DEVELOPER
-#include <MemoryFree.h> //http://playground.arduino.cc/Code/AvailableMemory
-#include <QList.h> //https://github.com/SloCompTech/QList
-#endif
 
 // credit to Adafruit PWM servo driver library
 #include <Wire.h>
@@ -103,7 +27,6 @@
 
 //board configuration
 #define INTERRUPT 0
-#define IR_RECEIVER 4 // Signal Pin of IR receiver to Arduino Digital Pin 4
 #define BUZZER 5
 #define GYRO
 #define ULTRA_SOUND
@@ -230,39 +153,6 @@ int8_t tStep = 1;
  */
 
 
-#ifdef NyBoard_V0_1
-byte pins[] = {7, 0, 8, 15,
-               6, 1, 14, 9,
-               5, 2, 13, 10,
-               4, 3, 12, 11
-              };
-#define BATT A0 //voltage detector
-#define LOW_BATT 440
-#define DEVICE_ADDRESS 0x50     //I2C Address of eeprom chip         
-#define BAUD_RATE 57600
-
-#elif defined NyBoard_V0_2
-byte pins[] = {4, 3, 11, 12,
-               5, 2, 13, 10,
-               6, 1, 14, 9,
-               7, 0, 15, 8
-              };
-#define BATT A0
-#define LOW_BATT 440
-#define DEVICE_ADDRESS 0x50
-#define BAUD_RATE 57600
-
-#elif defined NyBoard_V1_0
-byte pins[] = {12, 11, 3, 4,
-               13, 10, 5, 2,
-               14, 9, 6, 1,
-               15, 8, 7, 0
-              };
-#define BATT A7
-#define LOW_BATT 640
-#define DEVICE_ADDRESS 0x54
-#define BAUD_RATE 115200
-#elif defined Arduino_Board
 byte pins[] = {8, 9, 10, 11,
                15, 14, 13, 12,
                0, 2, 6, 4,
@@ -276,24 +166,12 @@ byte pins[] = {8, 9, 10, 11,
 #define LOW_BATT 640
 #define DEVICE_ADDRESS 0x54
 #define BAUD_RATE 115200
-#endif
 
-#ifdef NYBBLE
 #define HEAD
 #define TAIL
-#ifdef Arduino_Board
 #define TAIL_TILT
-#endif //!Arduino_Board
 #define X_LEG
 #define WALKING_DOF 8
-#else
-#ifdef BITTLE
-#define HEAD
-#define LL_LEG
-#define WALKING_DOF 8
-#define P1S
-#endif //!BITTLE
-#endif //!NYBBLE
 
 //on-board EEPROM addresses
 #define CALIB 0              // 16 byte array
@@ -304,48 +182,18 @@ byte pins[] = {8, 9, 10, 11,
 
 //servo constants
 #define DOF 16
-#define PWM_FACTOR 1
-#define MG92B_MIN 170*PWM_FACTOR
-#define MG92B_MAX 550*PWM_FACTOR
-#define MG92B_RANGE 150
 
-#define MG90D_MIN 158*PWM_FACTOR //so mg92b and mg90 are not centered at the same signal
-#define MG90D_MAX 515*PWM_FACTOR
-#define MG90D_RANGE 150 // $$AL$$ in degrees???
-
-#define MG90S_MIN 158*PWM_FACTOR  // $$AL$$ TODO update
-#define MG90S_MAX 620*PWM_FACTOR  // $$AL$$ TODO update
-#define MG90S_RANGE 150           // $$AL$$ TODO update
-
-#define P1S_MIN 180*PWM_FACTOR
-#define P1S_MAX 620*PWM_FACTOR
-#define P1S_RANGE 250
+#define MG90S_MIN 125  
+#define MG90S_MAX 620  
+#define MG90S_RANGE 180
 
 
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
-// you can also call it with a different address you want
-//Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x41);
 
-// Depending on your servo make, the pulse width min and max may vary, you
-// want these to be as small/large as possible without hitting the hard stop
-// for max range. You'll have to tweak them as necessary to match the servos you
-// have!
-#ifdef P1S
-#define SERVOMIN  P1S_MIN // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  P1S_MAX // this is the 'maximum' pulse length count (out of 4096)
-#define SERVO_ANG_RANGE P1S_RANGE
-#else
-#ifdef MG90S
 #define SERVOMIN  MG90S_MIN 
 #define SERVOMAX  MG90S_MAX 
 #define SERVO_ANG_RANGE MG90S_RANGE
-#else
-#define SERVOMIN  MG92B_MIN 
-#define SERVOMAX  MG92B_MAX 
-#define SERVO_ANG_RANGE MG92B_RANGE
-#endif
-#endif
 #define PWM_RANGE (SERVOMAX - SERVOMIN)
 
 float degPerRad = 180 / M_PI;
@@ -364,9 +212,9 @@ int8_t middleShifts[] = {0, 15, 0, 0,
                         };
 #endif
 #ifdef Arduino_Board
-int8_t rotationDirections[] = {1, -1, 1, 1, //$$AL$$ TODO : update
+int8_t rotationDirections[] = {-1, 1, 1, 1, //$$AL$$ TODO : update
+                               1, -1, 1, -1,
                                1, -1, -1, 1,
-                               -1, 1, 1, -1,
                                -1, 1, 1, -1
                               };
 #else
@@ -441,11 +289,13 @@ int EEPROMReadInt(int p_address)
 #define PAGE_LIMIT 32 //AT24C32D 32-byte Page Write Mode. Partial Page Writes Allowed
 #define EEPROM_SIZE (65536/8)
 
+template <typename T> void printList(T * arr, byte len = DOF);
+
 class Motion {
   public:
     byte pins[DOF];           //the mapping between PCB pins and the joint indexes
     int8_t period;            //the period of a skill. 1 for posture, >1 for gait, <-1 for behavior
-    int expectedRollPitch[2]; //expected body orientation (roll, pitch)
+    int8_t expectedRollPitch[2]; //expected body orientation (roll, pitch)
     byte angleDataRatio;      //divide large angles by 1 or 2. if the max angle of a skill is >128, all the angls will be divided by 2
     byte loopCycle[3];        //the looping section of a behavior (starting row, ending row, repeating cycles)
     char* dutyAngles;         //the data array for skill angles and parameters
@@ -462,47 +312,58 @@ class Motion {
   const char* progmemPointer[] = {bd, bi, bk, bkL, bkR, crF, crL, crR, ly, trF, trL, trR, vt, wkF, wkL, wkR, balance, buttUp, calib, dropped, lifted, lu, rest, sit, sleep, str, zero, hi, pee, pu, rc, stand, };
  */
       byte skillNameLength = strlen(skillName);
+      //printList(progmemPointer[22], 16 + SKILL_HEADER_LENGTH);
+      //printList(rest, 16 + SKILL_HEADER_LENGTH);
+      
       for (byte i = 0; i < NUM_SKILLS; i++) {
         if (!strncmp(skillNameWithType[i], skillName, skillNameLength)) {
+          printList(progmemPointer[i], 16 + SKILL_HEADER_LENGTH);
           return progmemPointer[i];
         }
       }
+      PTL("NULL");
       return NULL;
     }
 
     void loadBySkillName(char* skillName) {
       const char *skillAddr = lookupAddressByName(skillName);
-      if (skillAddr == NULL)
+      if (skillAddr == NULL) {
         return;
-      delete[] dutyAngles;
-#ifdef DEVELOPER
-      PTF("free memory: ");
-      PTL(freeMemory());
-#endif
-      period = skillAddr[0];
-      expectedRollPitch[0] = (int8_t)skillAddr[1];
-      expectedRollPitch[1] = (int8_t)skillAddr[2];
-      angleDataRatio = skillAddr[3];
+      }
+      if (dutyAngles != NULL) {
+        delete[] dutyAngles;
+      }
+      period = pgm_read_byte_near(skillAddr + 0); //skillAddr[0];
+      expectedRollPitch[0] = pgm_read_byte_near(skillAddr + 1); //(int8_t)skillAddr[1];
+      expectedRollPitch[1] = pgm_read_byte_near(skillAddr + 2); //(int8_t)skillAddr[2];
+      angleDataRatio = pgm_read_byte_near(skillAddr + 3); //skillAddr[3];
       byte skillHeader = SKILL_HEADER_LENGTH;
       byte frameSize;
       if (period < -1) {
         frameSize = 20;
         for (byte i = 0; i < 3; i++)
-          loopCycle[i] = skillAddr[skillHeader + i];
+          loopCycle[i] = pgm_read_byte_near(skillAddr + skillHeader + i); //skillAddr[skillHeader + i];
         skillHeader += 3;
       } else {
         frameSize = period > 1 ? WALKING_DOF : 16;
       }
       int len = abs(period) * frameSize;
+      PT("loadBySkillName ");
+      PT( skillName);
+      PT('-');
+      PT(len);
+      PT('-');
+      PT(frameSize);
+      PT('-');
+      PT(period);
+      // printList(skillAddr, frameSize + SKILL_HEADER_LENGTH);
       dutyAngles = new char[len];
       for (int k = 0; k < len; k++) {
-        dutyAngles[k] = skillAddr[skillHeader + k];
+        dutyAngles[k] = pgm_read_byte_near(skillAddr + skillHeader + k); //skillAddr[skillHeader + k];
       }
-#ifdef DEVELOPER
-      PTF("free memory: ");
-      PTL(freeMemory());
-#endif
+      printList(dutyAngles, len);
     }
+    
     void info() {
       PTL("period: " + String(period) + ",\tdelayBetweenFrames: " + ",\texpected (pitch,roll): (" + expectedRollPitch[0]*degPerRad + "," + expectedRollPitch[1]*degPerRad + ")");
       for (int k = 0; k < period * (period > 1 ? WALKING_DOF : 16); k++) {
@@ -624,14 +485,44 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   /*float angle = max(-SERVO_ANG_RANGE/2, min(SERVO_ANG_RANGE/2, angle));
     if (i > 3 && i < 8)
     angle = max(-5, angle);*/
+  PTF("calibratedPWM");
+  PT("(");
+  PT(i);
+  PT("-");
+  PT(pins[i]);
+  PT(")");
+  PT("-(");
+  PT(angle);
+  PT(")");
   int duty0 = calibratedDuty0[i] + currentAng[i] * pulsePerDegree[i] * rotationDirections[i];
+  PTF(" D0 ");
+  PT(duty0);
   currentAng[i] = angle;
   int duty = calibratedDuty0[i] + angle * pulsePerDegree[i] * rotationDirections[i];
   duty = max(SERVOMIN , min(SERVOMAX , duty));
+  PTF(" D ");
+  PTL(duty);
+#if 1
+    pwm.setPWM(pins[i], 0, duty);
+#else  
   byte steps = byte(round(abs(duty - duty0) / 1.0/*degreeStep*/ / speedRatio)); //default speed is 1 degree per step
+  if (steps == 0) {
+    steps = 1;
+  }
+  //$$AL$$
+  steps = 0;
+  PTF(" S ");
+  PTL(steps);
   for (byte s = 0; s <= steps; s++) {
+    PTF("setPWM : Pin ");
+    PT(pins[i]);
+    PTF("-");
+    PT(duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty)));
+    PTF("-");
+    PTL(angle);
     pwm.setPWM(pins[i], 0, duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty)));
   }
+#endif  
 }
 
 void allCalibratedPWM(char * dutyAng, byte offset = 0) {
